@@ -1,0 +1,32 @@
+name: Generate Upload Keystore
+on: workflow_dispatch
+
+jobs:
+  keygen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore upload-keystore.jks \
+            -alias upload \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            -dname "CN=QR Servis, OU=QR Menu Official, O=QR Menu Official, L=Istanbul, ST=Istanbul, C=TR"
+
+          keytool -export -rfc \
+            -keystore upload-keystore.jks \
+            -alias upload \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -file upload_certificate.pem
+
+          base64 -w0 upload-keystore.jks > keystore.b64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keystore-bundle
+          path: |
+            upload-keystore.jks
+            upload_certificate.pem
+            keystore.b64
