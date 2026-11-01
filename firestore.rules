@@ -16,11 +16,8 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Eski kayıtlarda "rol", bazılarında "role" alanı var.
     function myRole() {
-      return hasProfile()
-        ? string(me().get('rol', '') != '' ? me().get('rol', '') : me().get('role', '')).lower()
-        : '';
+      return hasProfile() ? me().get('rol', '') : '';
     }
 
     function myBranch() {
@@ -32,24 +29,19 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isActiveUser() &&
-        myRole() in ['admin', 'yonetici', 'yönetici', 'administrator', 'kurucu', 'patron', 'sistem'];
+      return isActiveUser() && myRole() == 'admin';
     }
 
     function isManager() {
-      return isActiveUser() && myRole() in ['mudur', 'müdür', 'manager'];
+      return isActiveUser() && myRole() == 'mudur';
     }
 
     function isWaiter() {
-      return isActiveUser() && myRole() in ['garson', 'waiter'];
+      return isActiveUser() && myRole() == 'garson';
     }
 
     function isStaff() {
       return isAdmin() || isManager() || isWaiter();
-    }
-
-    function isWaiterRole(r) {
-      return string(r).lower() in ['garson', 'waiter'];
     }
 
     function changedKeys() {
@@ -65,7 +57,9 @@ service cloud.firestore {
         (isStaff() && resource.data.branchId == myBranch())
       );
 
-      allow create: if isAdmin();
+      allow create: if isAdmin() || (isManager() &&
+        request.resource.data.rol == 'garson' &&
+        request.resource.data.branchId == myBranch());
 
       allow update: if signedIn() && (
         // Kendi dokümanında yalnızca bu alanlar
@@ -75,20 +69,20 @@ service cloud.firestore {
         // Müdür: kendi şubesindeki garsonun yalnızca bu alanları
         (isManager() &&
           resource.data.branchId == myBranch() &&
-          isWaiterRole(resource.data.get('rol', resource.data.get('role', ''))) &&
+          resource.data.get('rol', '') == 'garson' &&
           request.resource.data.get('rol', '') == resource.data.get('rol', '') &&
           request.resource.data.get('branchId', '') == resource.data.get('branchId', '') &&
           changedKeys().hasOnly(['ad', 'aktif', 'passwordUpdatedAt']))
       );
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (isManager() &&
+        resource.data.get('rol', '') == 'garson' &&
+        resource.data.branchId == myBranch());
     }
 
     // ───────── branches ─────────
-    // NOT: apiKey alanı bu dokümanda; giriş yapan herkes okuyabilir.
-    // İleride apiKey'i ayrı bir alt koleksiyona taşıyın.
     match /branches/{branchId} {
-      allow read: if signedIn();
+      allow read: if isAdmin() || (isStaff() && branchId == myBranch());
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
         isManager() &&
@@ -99,7 +93,7 @@ service cloud.firestore {
 
     // ───────── tables ─────────
     match /tables/{tableId} {
-      allow read: if signedIn();
+      allow read: if isAdmin() || (isStaff() && resource.data.branchId == myBranch());
       allow create: if isAdmin() ||
         (isManager() && request.resource.data.branchId == myBranch());
       allow update: if false;
@@ -114,14 +108,8 @@ service cloud.firestore {
         (isStaff() && resource.data.branchId == myBranch())
       );
 
-      // Müşteri tarafı çağrıyı oluşturuyor (oturumlu istemci veya sunucu).
-      // Şekil doğrulaması: yalnızca "bekliyor" durumunda yeni çağrı.
-      allow create: if signedIn() &&
-        request.resource.data.branchId is string &&
-        request.resource.data.branchId.size() > 0 &&
-        request.resource.data.masaNo is string &&
-        request.resource.data.tip in ['garson', 'hesap', 'siparis'] &&
-        request.resource.data.durum == 'bekliyor';
+      // Çağrıları WordPress (Admin SDK) oluşturur; istemci oluşturamaz.
+      allow create: if false;
 
       allow update: if signedIn() && (isAdmin() ||
         (isStaff() && resource.data.branchId == myBranch())) && (
@@ -130,8 +118,9 @@ service cloud.firestore {
           request.resource.data.durum == 'onaylandi' &&
           request.resource.data.onaylayanUid == request.auth.uid &&
           changedKeys().hasOnly(['durum', 'onaylayanUid', 'onaylayanAd', 'onaylandiAt'])) ||
-        // İptal
+        // İptal (yalnızca sipariş çağrıları)
         (resource.data.durum == 'bekliyor' &&
+          resource.data.tip == 'siparis' &&
           request.resource.data.durum == 'iptal' &&
           changedKeys().hasOnly(['durum', 'iptalNedeni', 'iptalEdenAd', 'iptalAt'])) ||
         // Sipariş teslim aşaması
@@ -148,10 +137,12 @@ service cloud.firestore {
     }
 
     // ───────── shifts ─────────
-    // Okuma tüm aktif personele açık: müdürün "garsonUid" ile yaptığı sorgular
-    // şube filtresi içermediği için kurallar şubeyi kanıtlayamaz.
+    // Müdürün "garsonUid" ile yaptığı sorgular şube filtresi içermediği için
+    // müdür okuması rol bazlı; garson yalnızca kendi vardiyası veya kendi şubesi.
     match /shifts/{shiftId} {
-      allow read: if isStaff();
+      allow read: if isAdmin() || isManager() ||
+        (isStaff() && (resource.data.garsonUid == request.auth.uid ||
+                       resource.data.branchId == myBranch()));
 
       allow create: if isWaiter() &&
         request.resource.data.garsonUid == request.auth.uid &&
