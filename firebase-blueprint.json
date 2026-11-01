@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "Branch": {
+      "collection": "branches",
+      "fields": {
+        "id": { "type": "string" },
+        "ad": { "type": "string" },
+        "slug": { "type": "string" },
+        "apiKey": { "type": "string" },
+        "lat": { "type": "number", "optional": true },
+        "lng": { "type": "number", "optional": true },
+        "radius": { "type": "number", "optional": true },
+        "locationCheckEnabled": { "type": "boolean" },
+        "createdAt": { "type": "timestamp", "optional": true }
+      }
+    },
+    "User": {
+      "collection": "users",
+      "fields": {
+        "uid": { "type": "string" },
+        "kullaniciAdi": { "type": "string" },
+        "rol": { "type": "string" },
+        "branchId": { "type": "string" },
+        "ad": { "type": "string" },
+        "fcmToken": { "type": "string" },
+        "createdAt": { "type": "timestamp", "optional": true }
+      }
+    },
+    "Call": {
+      "collection": "calls",
+      "fields": {
+        "id": { "type": "string" },
+        "branchId": { "type": "string" },
+        "masaNo": { "type": "string" },
+        "tip": { "type": "string" },
+        "durum": { "type": "string" },
+        "onaylayanUid": { "type": "string", "optional": true },
+        "onaylayanAd": { "type": "string", "optional": true },
+        "createdAt": { "type": "timestamp", "optional": true },
+        "onaylandiAt": { "type": "timestamp", "optional": true },
+        "iptalNedeni": { "type": "string", "optional": true },
+        "iptalEdenAd": { "type": "string", "optional": true },
+        "iptalAt": { "type": "timestamp", "optional": true }
+      }
+    },
+    "Shift": {
+      "collection": "shifts",
+      "fields": {
+        "id": { "type": "string" },
+        "branchId": { "type": "string" },
+        "garsonUid": { "type": "string" },
+        "garsonAd": { "type": "string" },
+        "baslangic": { "type": "timestamp", "optional": true },
+        "bitis": { "type": "timestamp", "optional": true },
+        "durum": { "type": "string" },
+        "molada": { "type": "boolean" },
+        "molaBaslangic": { "type": "timestamp", "optional": true }
+      }
+    },
+    "Announcement": {
+      "collection": "announcements",
+      "fields": {
+        "id": { "type": "string" },
+        "branchId": { "type": "string" },
+        "senderUid": { "type": "string" },
+        "senderName": { "type": "string" },
+        "targetType": { "type": "string" },
+        "targetUserUid": { "type": "string", "optional": true },
+        "targetUserName": { "type": "string", "optional": true },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "timestamp", "optional": true },
+        "active": { "type": "boolean" },
+        "readUids": { "type": "array" }
+      }
+    }
+  }
+}

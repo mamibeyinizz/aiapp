@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "702765035342",
+    "project_id": "mami-af076",
+    "storage_bucket": "mami-af076.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:702765035342:android:b71591ba4c3e8498e7f81f",
+        "android_client_info": {
+          "package_name": "com.aistudio.qrservis.pqwtzm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCFa5m58tfkZZ-ElYl8IhAbLdV_KyAHcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

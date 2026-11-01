@@ -1,0 +1,6 @@
+{
+  "name": "QR Servis",
+  "description": "Garson & Hesap Çağırma Uygulaması",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
